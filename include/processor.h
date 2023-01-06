@@ -1,12 +1,23 @@
 #ifndef PROCESSOR_H
 #define PROCESSOR_H
 
+
 class Processor {
  public:
-  float Utilization();  // TODO: See src/processor.cpp
+  Processor();
+  float Utilization();
 
-  // TODO: Declare any necessary private members
  private:
+ 
+ /**
+  * @brief saved idle jiffies 
+  **/
+ long _prevIdleJiffies;
+  
+  /**
+  * @brief saved total jiffies 
+  **/
+ long _prevTotalJiffies;
 };
 
 #endif

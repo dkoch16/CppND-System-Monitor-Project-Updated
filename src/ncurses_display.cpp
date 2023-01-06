@@ -55,14 +55,14 @@ void NCursesDisplay::DisplaySystem(System& system, WINDOW* window) {
 void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
                                       WINDOW* window, int n) {
   int row{0};
-  int const pid_column{2};
+  int const pid_column{1};
   int const user_column{9};
-  int const cpu_column{16};
-  int const ram_column{26};
-  int const time_column{35};
-  int const command_column{46};
+  int const cpu_column{20};
+  int const ram_column{30};
+  int const time_column{39};
+  int const command_column{50};
   wattron(window, COLOR_PAIR(2));
-  mvwprintw(window, ++row, pid_column, "PID");
+  mvwprintw(window, ++row, pid_column + 2, "PID");
   mvwprintw(window, row, user_column, "USER");
   mvwprintw(window, row, cpu_column, "CPU[%%]");
   mvwprintw(window, row, ram_column, "RAM[MB]");
@@ -70,17 +70,22 @@ void NCursesDisplay::DisplayProcesses(std::vector<Process>& processes,
   mvwprintw(window, row, command_column, "COMMAND");
   wattroff(window, COLOR_PAIR(2));
   int const num_processes = int(processes.size()) > n ? n : processes.size();
+
   for (int i = 0; i < num_processes; ++i) {
-    mvwprintw(window, ++row, pid_column, to_string(processes[i].Pid()).c_str());
+
+    mvwprintw(window, ++row, pid_column, Format::Pid(processes[i].Pid()).c_str());
     mvwprintw(window, row, user_column, processes[i].User().c_str());
+    
     float cpu = processes[i].CpuUtilization() * 100;
     mvwprintw(window, row, cpu_column, to_string(cpu).substr(0, 4).c_str());
-    mvwprintw(window, row, ram_column, processes[i].Ram().c_str());
+
+    mvwprintw(window, row, ram_column, Format::Ram(processes[i].Ram()).c_str());
     mvwprintw(window, row, time_column,
               Format::ElapsedTime(processes[i].UpTime()).c_str());
     mvwprintw(window, row, command_column,
-              processes[i].Command().substr(0, window->_maxx - 46).c_str());
+              Format::Command(processes[i].Command(), window->_maxx - command_column).c_str());
   }
+  wrefresh(window);
 }
 
 void NCursesDisplay::Display(System& system, int n) {
