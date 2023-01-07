@@ -41,6 +41,7 @@ T readValueFromFile(const string& filePath, const string& searchedKey, T default
       }
     }
   }
+  fileStream.close();
   return value;
 }
 
@@ -49,14 +50,14 @@ string LinuxParser::OperatingSystem() {
   string line;
   string key;
   string value;
-  std::ifstream filestream(kOSPath);
-  if (filestream.is_open()) {
-    while (std::getline(filestream, line)) {
+  std::ifstream fileStream(kOSPath);
+  if (fileStream.is_open()) {
+    while (std::getline(fileStream, line)) {
       std::replace(line.begin(), line.end(), ' ', '_');
       std::replace(line.begin(), line.end(), '=', ' ');
       std::replace(line.begin(), line.end(), '"', ' ');
-      std::istringstream linestream(line);
-      while (linestream >> key >> value) {
+      std::istringstream lineStream(line);
+      while (lineStream >> key >> value) {
         if (key == "PRETTY_NAME") {
           std::replace(value.begin(), value.end(), '_', ' ');
           return value;
@@ -64,6 +65,7 @@ string LinuxParser::OperatingSystem() {
       }
     }
   }
+  fileStream.close();
   return value;
 }
 
@@ -74,9 +76,10 @@ string LinuxParser::Kernel() {
   std::ifstream stream(kProcDirectory + kVersionFilename);
   if (stream.is_open()) {
     std::getline(stream, line);
-    std::istringstream linestream(line);
-    linestream >> os >> version >> kernel;
+    std::istringstream lineStream(line);
+    lineStream >> os >> version >> kernel;
   }
+  stream.close();
   return kernel;
 }
 
@@ -108,8 +111,8 @@ vector<int> LinuxParser::Pids() {
 float LinuxParser::MemoryUtilization()
 { 
   const string filePath = kProcDirectory + kMeminfoFilename;
-  const int memTotal    = readValueFromFile<int>(filePath, "MemTotal", 0);
-  const int memFree     = readValueFromFile<int>(filePath, "MemFree", 0);
+  const int memTotal    = readValueFromFile<int>(filePath, kFilterMemTotal, 0);
+  const int memFree     = readValueFromFile<int>(filePath, kFilterMemFree, 0);
   
   // return relative usage of memory
   const float memUsed   = (memTotal == 0)? 0.0 : static_cast<float>(memTotal - memFree) / static_cast<float>(memTotal); 
@@ -130,7 +133,7 @@ long LinuxParser::UpTime()
   {
     stream >> uptime;
   }
-  
+  stream.close();
   return uptime; 
 }
 
@@ -176,9 +179,8 @@ long LinuxParser::ActiveJiffies(int pid)
     // read #14-17
     fileStream >> uTime >> sTime >> cuTime >> csTime;
   }
-  long total_time = uTime + sTime + cuTime + csTime;
-  //seconds = uptime - (starttime / Hertz);
-  //cpu_usage = 100 * ((total_time / Hertz) / seconds); 
+
+  long total_time = uTime + sTime + cuTime + csTime;  
   return total_time;
 }
 
@@ -227,7 +229,7 @@ vector<long> LinuxParser::CpuUtilization()
       std::istringstream lineStream(line);
       lineStream >> key; 
 
-      if (key == "cpu")
+      if (key == kFilterCpu)
       {
         std::copy(
           std::istream_iterator<long>(lineStream), 
@@ -237,6 +239,7 @@ vector<long> LinuxParser::CpuUtilization()
       }
     }
   }
+  fileStream.close();
   return values;  
 }
 
@@ -248,7 +251,7 @@ vector<long> LinuxParser::CpuUtilization()
 int LinuxParser::TotalProcesses() 
 { 
   const string filePath = kProcDirectory + kStatFilename;
-  const int totalNumber  = readValueFromFile<int>(filePath, "processes", 0);
+  const int totalNumber  = readValueFromFile<int>(filePath, kFilterProcesses, 0);
 
   return totalNumber; 
 }
@@ -262,7 +265,7 @@ int LinuxParser::RunningProcesses()
 { 
   const string filePath    = kProcDirectory + kStatFilename;
   
-  const int runningNumber  = readValueFromFile<int>(filePath, "procs_running", 0);
+  const int runningNumber  = readValueFromFile<int>(filePath, kFilterRunningProcesses, 0);
 
   return runningNumber; 
 }
@@ -281,7 +284,7 @@ string LinuxParser::Command(int pid)
   if (stream.is_open()) {
     stream >> cmd;
   }  
-
+  stream.close();
   return cmd; 
 }
 
@@ -294,7 +297,7 @@ string LinuxParser::Command(int pid)
 int LinuxParser::Ram(int pid) 
 { 
   const string filePath = kProcDirectory +  to_string(pid) + kStatusFilename;
-  const int sizeInKB    = readValueFromFile<int>(filePath, "VmSize", 0);
+  const int sizeInKB    = readValueFromFile<int>(filePath, kFilterProcMem, 0);
   const int sizeInMB    = (int)( (sizeInKB / 1024.0) + 0.5);
   return sizeInMB; 
 }
@@ -308,7 +311,7 @@ int LinuxParser::Ram(int pid)
 int LinuxParser::Uid(int pid) 
 { 
   const string filePath = kProcDirectory +  to_string(pid) + kStatusFilename;
-  const int uid      = readValueFromFile<int>(filePath, "Uid", 0);
+  const int uid      = readValueFromFile<int>(filePath, kFilterUID, 0);
   return uid; 
 }
 
@@ -342,6 +345,7 @@ string LinuxParser::User(int pid)
     }
   }
 
+  fileStream.close();
   return user; 
 }
 
@@ -374,6 +378,7 @@ long LinuxParser::UpTime(int pid)
     // read #22 
     fileStream >> uptime;
   }
-  
+  fileStream.close();
+
   return (uptime / sysconf(_SC_CLK_TCK)); 
 }

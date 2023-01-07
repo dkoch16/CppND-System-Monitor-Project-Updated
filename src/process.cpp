@@ -35,16 +35,15 @@ int Process::Pid() const { return _id; }
  **/
 float Process::CpuUtilization() 
 { 
-   const long systemUpTime     = LinuxParser::UpTime();
-   const long processUpTime    = UpTime();
-
    const long totalTimeActive  = LinuxParser::ActiveJiffies(_id)/ sysconf(_SC_CLK_TCK);
-   _cpuUsage = static_cast<float>(totalTimeActive) / static_cast<float>(systemUpTime-processUpTime);
+
+   _cpuUsage = static_cast<float>(totalTimeActive) / static_cast<float>(UpTime());
    return _cpuUsage; 
 }
 
 /**
  * @brief Return the command that generated this process
+ *  Note: The cutoff of command is implemented in format.cpp see Format::Command
  **/
 string Process::Command() const { return _command; }
 
@@ -66,7 +65,9 @@ string Process::User() const { return _user; }
  **/
 long int Process::UpTime() 
 { 
-   return LinuxParser::UpTime(_id);
+   const long systemUpTime     = LinuxParser::UpTime();
+   const long processUpTime    = LinuxParser::UpTime(_id);
+   return systemUpTime - processUpTime;
 }
 
 /**

@@ -30,6 +30,8 @@ string Format::ElapsedTime(long seconds)
 
 /**
  * @brief Format memory numbers to same char size in colum of length 8
+ *        That should help to keep the output in ncurses clean, otherwise 
+ *        after sorting we get weird output with values overlapping
  * 
  * @param[in] ram size of used memory      
  * @return formatted memory number as string
@@ -43,6 +45,8 @@ string Format::Ram(int ram)
 
 /**
  * @brief Format pids to same size in colum of length 7
+ *        That should help to keep the output in ncurses clean, otherwise 
+ *        after sorting we get weird output with values overlapping
  * 
  * @param[in] pid process ID     
  * @return formatted pid number as string 
@@ -55,11 +59,15 @@ string Format::Pid(int pid)
 }
 
 /**
- * @brief Format command string to same size in column of max size left in column
+ * @brief Format command string to same size and 
+ *        if column have not enough space left, then cutoff this string. 
+ *        That helps to avoid overwriting the ncurses window   
+ *  *     That should help to keep the output in ncurses clean, otherwise 
+ *        after sorting we get weird output with values overlapping 
  * 
- * @param[in] pid process ID 
- * @param[in] maxSize max size left in column        
- * @return formatted command as string 
+ * @param[in] command Not formatted command string 
+ * @param[in] maxSize Max size left in column        
+ * @return Formatted command as string 
  **/
 string Format::Command(string command, int maxSize)
 {
